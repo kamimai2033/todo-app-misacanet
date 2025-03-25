@@ -117,9 +117,41 @@
             taskList.innerHTML = "";
             let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
+            // （1）締め切り日でソート
+            tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            // 今日の日付(時刻を 00:00:00 にそろえる)
+            let now = new Date();
+            now.setHours(0, 0, 0, 0);
+
             tasks.forEach((task, index) => {
                 let li = document.createElement("li");
-                li.innerHTML = `<span>${task.text} (Due: ${task.dueDate})</span> <button class="delete-btn" onclick="removeTask(${index})">Delete</button>`;
+
+                // 締め切り日をDate型に変換し、残り日数を計算
+                let due = new Date(task.dueDate);
+                due.setHours(0, 0, 0, 0);
+                let diffTime = due - now;
+                let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                // 表示用の要素を作成
+                let span = document.createElement("span");
+                span.textContent = `${task.text} (Due: ${task.dueDate})`;
+
+                // （2）締め切りが近いタスクを赤字に
+                // 例として「あと3日以内」を判定
+                if (diffDays <= 1) {
+                    span.style.color = 'red';
+                } else if (diffDays <= 3) {
+                    span.style.color = 'orange';
+                }
+
+                let deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.classList.add("delete-btn");
+                deleteBtn.addEventListener("click", () => removeTask(index));
+
+                li.appendChild(span);
+                li.appendChild(deleteBtn);
                 taskList.appendChild(li);
             });
         }
